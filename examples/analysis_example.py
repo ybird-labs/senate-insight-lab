@@ -3,7 +3,7 @@
 Advanced analysis example showing how to customize the detection algorithms.
 """
 
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from senate_insight.models.congress_member import CongressMember, LegislativeAction, CommitteeAssignment
 from senate_insight.models.financial_disclosure import StockTransaction, StockPrice
 from senate_insight.analyzers.insider_trading_detector import InsiderTradingDetector
@@ -42,8 +42,8 @@ def create_sample_data():
         member_id="S001",
         action_type="vote",
         bill_id="S.123",
-        bill_title="Technology Innovation and Competition Act",
-        action_date=date(2023, 10, 10).strftime("%Y-%m-%dT00:00:00"),
+        bill_title="Technology Innovation and Competition Act affecting Apple Inc technology",  # More specific
+        action_date=datetime(2023, 10, 10),  # 9 days after transaction
         position="Yes",
         industries_affected=["technology", "telecommunications"]
     )
@@ -51,23 +51,23 @@ def create_sample_data():
     # Sample committee assignment
     committee = CommitteeAssignment(
         member_id="S001",
-        committee_name="Banking, Housing, and Urban Affairs",
-        committee_code="BANK",
+        committee_name="Commerce, Science, and Transportation",  # Tech-related committee
+        committee_code="COMM",
         start_date=date(2021, 1, 3)
     )
     
-    # Sample stock prices (showing price increase after transaction)
+    # Sample stock prices (showing significant price increase after transaction)
     base_price = 150.0
     stock_prices = []
     
     for i in range(-30, 31):  # 30 days before and after transaction
         price_date = date(2023, 10, 1) + timedelta(days=i)
         
-        # Simulate price increase after transaction date
+        # Simulate significant price increase after transaction date
         if i <= 0:
-            price = base_price + (i * 0.1)  # Slight decline before
+            price = base_price + (i * 0.05)  # Slight decline before
         else:
-            price = base_price + (i * 0.5)  # Increase after
+            price = base_price + (i * 1.0)   # Significant increase after (30% over 30 days)
         
         stock_prices.append(StockPrice(
             ticker="AAPL",
@@ -76,7 +76,7 @@ def create_sample_data():
             close_price=price,
             high_price=price + 2,
             low_price=price - 2,
-            volume=1000000 + (i * 10000)  # Increasing volume
+            volume=1000000 + (abs(i) * 50000)  # Higher volume around transaction
         ))
     
     return member, [transaction], [legislative_action], [committee], {"AAPL": stock_prices}
