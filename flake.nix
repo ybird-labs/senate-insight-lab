@@ -4,21 +4,35 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {self, nixpkgs, flake-utils}:
+  outputs = {self, nixpkgs, flake-utils, uv2nix, ...}:
   flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
+      workspace = uv2nix.lib.workspace.loadWorkspace {
+        workspaceRoot = ./.;
+      };
     in {
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
-          python314
+          python313
           uv
           # System
-          chromium
+          git
           firefox
           playwright-driver
+        ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
+          chromium
         ];
 
         shellHook = ''
