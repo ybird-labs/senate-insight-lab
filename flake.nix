@@ -13,15 +13,49 @@
       inputs.pyproject-nix.follows = "pyproject-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = {self, nixpkgs, flake-utils, uv2nix, ...}:
+  outputs = {self, nixpkgs, flake-utils, uv2nix, pyproject-build-systems, pyproject-nix,...}:
   flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
+      python = pkgs.python313;
       workspace = uv2nix.lib.workspace.loadWorkspace {
         workspaceRoot = ./.;
       };
+
+
+      overlay = workspace.mkPyprojectOverlay {
+        sourcePreference = "wheel";
+      };
+
+      # pythonSet = pythonBase.overrideScope (
+      #   flake-utils.lib.composeManyExtensions [
+      #     pyproject-build-systems.overlays.wheel
+      #     overlay
+      #   ]
+      # );
+      # 3. Create Python package set with build systems
+      pythonSet = (pkgs.callPackage pyproject-nix.build.packages {
+        inherit python;
+      }).overrideScope (
+        pkgs.lib.composeManyExtensions [
+          pyproject-build-systems.overlays.default
+          overlay
+        ]
+      );
+
+      virtualEnv = pythonSet.mkVirtualEnv  "senate-insight-env" workspace.deps.default;
+
+
+
     in {
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
@@ -32,7 +66,7 @@
           firefox
           playwright-driver
           # Python
-          virtualenv
+          virtualEnv
         ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
           chromium
         ];
@@ -50,7 +84,7 @@
             echo "Python $(python --version)"
             echo "UV $(uv --version)"
             echo "Run 'uv init .' to start your project"
-        '';
+            '';
       };
     }
   );
