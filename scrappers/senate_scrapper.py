@@ -1,7 +1,5 @@
-import random
-from dill import session
-from pip._vendor.requests import Session
-import requests
+import asyncio
+from playwright.async_api import async_playwright
 
 class Config:
     BASE_URL = "https://efdsearch.senate.gov"
@@ -18,41 +16,27 @@ class Config:
         'Connection': 'keep-alive',
     }
 
-    @staticmethod
-    def get_delay():
-        """Returns a random delay between MIN_DELAY and MAX_DELAY"""
-        return random.uniform(Config.MIN_DELAY, Config.MAX_DELAY)
+async def access_senate_search():
+    async with async_playwright() as p:
+        # Launch browser (use headless=False initially to debug)
+        browser = await p.chromium.launch(headless=False)
+        page = await browser.new_page()
+
+        # Step 1: Navigate to agreement page
+        await page.goto("https://efdsearch.senate.gov/search/")
+
+        # Step 2: Accept the agreement
+        await page.check("#agree_statement")  # Check the checkbox
+
+        # Step 3: Wait for navigation to search page
+        await page.wait_for_url("**/home/", timeout=10000)
+
+        # Now you're on the search interface
+        print(f"Current URL: {page.url}")
 
 
-class SenateScraper:
-    def __init__(self):
-        self.session = requests.Session()
-        self.session.headers.update(Config.HEADERS)
+async def main():
+    await access_senate_search()
 
-
-
-# class SenateScraper:
-#     def __init__(self):
-#         # Create a session to reuse connections
-#         self.session = requests.Session()
-#         self.session.headers.update(Config.HEADERS)
-#         print("✅ Senate Scraper initialized")
-
-#     def make_request(self, url):
-#         """Downloads a web page safely with delays"""
-#         print(f"🌐 Fetching: {url}")
-
-#         # Wait before making request (be respectful!)
-#         time.sleep(Config.get_delay())
-
-#         try:
-#             response = self.session.get(url, timeout=30)
-#             if response.status_code == 200:
-#                 print(f"✅ Success: {response.status_code}")
-#                 return response
-#             else:
-#                 print(f"❌ Error: {response.status_code}")
-#                 return None
-#         except Exception as e:
-#             print(f"❌ Request failed: {e}")
-#             return None
+if __name__ == "__main__":
+    asyncio.run(main())

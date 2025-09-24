@@ -68,7 +68,7 @@
           # Don't create venv using uv
           UV_NO_SYNC = "1";
           # Force uv to use Python interpreter from venv
-          UV_PYTHON = "${pkgs.virtualenv}/bin/python";
+          UV_PYTHON = "${virtualEnv}/bin/python";
           # Prevent uv from downloading managed Python's
           UV_PYTHON_DOWNLOADS = "never";
         };

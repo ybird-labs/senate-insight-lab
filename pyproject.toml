@@ -1,11 +1,15 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "senate-insight"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "beautifulsoup4>=4.13.5",
-    "pandas>=2.3.2",
-    "playwright>=1.55.0",
-]
+dependencies = ["beautifulsoup4>=4.13.5", "pandas>=2.3.2", "playwright>=1.55.0"]
+
+[tool.setuptools.packages.find]
+include = ["scrappers*"]
+exclude = ["research*"]
