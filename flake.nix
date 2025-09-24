@@ -36,13 +36,6 @@
         sourcePreference = "wheel";
       };
 
-      # pythonSet = pythonBase.overrideScope (
-      #   flake-utils.lib.composeManyExtensions [
-      #     pyproject-build-systems.overlays.wheel
-      #     overlay
-      #   ]
-      # );
-      # 3. Create Python package set with build systems
       pythonSet = (pkgs.callPackage pyproject-nix.build.packages {
         inherit python;
       }).overrideScope (
