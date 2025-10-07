@@ -1,6 +1,4 @@
 import random
-from dill import session
-from pip._vendor.requests import Session
 import requests
 
 class Config:
